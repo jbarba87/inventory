@@ -2,7 +2,7 @@
 import sqlite3
 import Producto
 
-path = 'inventario'
+path = 'inventario.db'
 
 class Modell:
 
@@ -45,7 +45,7 @@ class Modell:
         stock = producto.getstock()
 
         sql_command = "update PRODUCTOS set NOMBRE='{}', ID_CATEGORIA='{}', COSTO='{}', STOCK='{}' where id = '{}'".format (nombre, categoria, precio, stock, id_producto)
-        print(sql_command)
+
         c.execute(sql_command)
         conn.commit()
         conn.close()
