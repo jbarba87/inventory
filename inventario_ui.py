@@ -8,6 +8,9 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import Controller
+
+
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
@@ -52,6 +55,12 @@ class Ui_Dialog(object):
         self.buttonBox.accepted.connect(Dialog.accept)
         self.buttonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+
+        # Rellenar categorias
+        lista = Controller.Controller.listar_categorias()
+        for ind in lista:
+          self.comboBox.addItem(ind[1]) # El segundo elemento de cada tupla es el nombre
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate

@@ -11,6 +11,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import Controller
 import Producto
 
+from inventario_ui import Ui_Dialog
+
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -85,12 +88,15 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
 
+###################################################################################
+###################################################################################
+###################################################################################
 
         # Conexiones ingresadas
-        #self.btnAgregar.clicked.connect(self.procesar_agregar)
+        self.btnAgregar.clicked.connect(self.procesar_agregar)
         self.btnActualizar.clicked.connect(self.procesar_actualizacion)
-        #self.btnBorrar.clicked.connect(self.procesar_borrado)
-        #self.btnEditar.clicked.connect(self.procesar_edicion)
+        self.btnEliminar.clicked.connect(self.procesar_borrado)
+        self.btnEditar.clicked.connect(self.procesar_edicion)
         #self.tableWidget.cellClicked.connect(self.table_clicked)
 
     def procesar_ingreso(self):
@@ -104,7 +110,7 @@ class Ui_MainWindow(object):
 
         self.tblProductos.setRowCount( len(lista) )
 
-        print(lista)
+        #print(lista)
 
         for al in lista:
 
@@ -123,15 +129,148 @@ class Ui_MainWindow(object):
         self.tblProductos.setColumnWidth(3, 50)
         self.tblProductos.setColumnWidth(4, 50)
 
-        
         msgBox = QtWidgets.QMessageBox()
         msgBox.setWindowTitle(" ")
         msgBox.setText("Mostrando " + str(row) + " columnas.")
         msgBox.exec()
 
+    def procesar_agregar(self):
+        # Abre nueva ventana
+        
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+        rsp = self.Dialog.exec_()
+
+        # Si el boton es aceptar, entonces se recupera los datos ingresados
+        if rsp == QtWidgets.QDialog.Accepted:
+            print("Aceptado")
+            nombre = self.ui.lineEdit.text() # nombre
+            categoria = self.ui.comboBox.currentText() # catogoria
+            #categoria = self.ui.comboBox.currentIndex()
+            costo = self.ui.lineEdit_3.text() # costo
+            stock = self.ui.lineEdit_4.text() # stock
+
+            # Buscar categoria con el nombre y recuperar el indice
+            cat = Controller.Controller.buscar_categoria(categoria)
+
+            # Limpiando datos para almacenarlos en la BD
+            nombre = " ".join(nombre.split())
+
+            # Agregar dato en la BD
+            nuevo_prod = Producto.Producto()
+            nuevo_prod.setnombre(nombre)
+            nuevo_prod.setcategoria(cat[0][0])
+            nuevo_prod.setprecio(costo)
+            nuevo_prod.setstock(stock)
+            res = Controller.Controller.ingresar_producto(nuevo_prod)
 
 
+            # Creacion del mensaje de exito o fracaso
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setWindowTitle(" ")
 
+            if res == -1:
+              msgBox.setText("Error al ingresar producto")
+              msgBox.exec()
+            else:
+              msgBox.setText("Producto ingresado con exito")
+              msgBox.exec()
+              self.procesar_actualizacion()
+
+        else:
+            print("Cancelado")
+
+
+    def procesar_borrado(self):
+        # Borrar entreda
+        widget_selected = self.tblProductos.selectedItems() # Lista de elementos seleccioandos
+        row = widget_selected[0].row()
+        # Elimina row de la tabla
+        # self.tblProductos.removeRow(row)
+
+        # Se busca el id del producto (columna 0)
+        id = self.tblProductos.item(row, 0).text()
+        # Elimina row de la base de datos
+        Controller.Controller.borrar_producto(id)
+        self.procesar_actualizacion()
+
+    def procesar_edicion(self):
+
+        widget_selected = self.tblProductos.selectedItems() # Lista de elementos seleccioandos
+        row = widget_selected[0].row()
+
+        # Obteniendo los datos del producto a editar
+        id_producto = self.tblProductos.item(row, 0).text()        
+        nombre = self.tblProductos.item(row, 1).text()
+        categoria = self.tblProductos.item(row, 2).text()
+        precio = self.tblProductos.item(row, 3).text()
+        stock = self.tblProductos.item(row, 4).text()
+
+        # Buscar categoria con el nombre y recuperar el indice
+        cat = Controller.Controller.buscar_categoria(categoria)
+        id_cat = cat[0][0]
+
+        # Abre nueva ventana
+        self.Dialog = QtWidgets.QDialog()
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self.Dialog)
+        self.Dialog.show()
+
+        # Rellena datos a editar
+        self.ui.lineEdit.setText(nombre)
+        self.ui.comboBox.setCurrentText(categoria)
+        self.ui.lineEdit_3.setText(precio)
+        self.ui.lineEdit_4.setText(stock)
+
+        rsp = self.Dialog.exec_()
+
+
+        # Si el boton es aceptar, entonces se recupera los datos ingresados
+        if rsp == QtWidgets.QDialog.Accepted:
+            print("Aceptado")
+            nombre = self.ui.lineEdit.text() # nombre
+            categoria = self.ui.comboBox.currentText() # catogoria
+            #categoria = self.ui.comboBox.currentIndex()
+            costo = self.ui.lineEdit_3.text() # costo
+            stock = self.ui.lineEdit_4.text() # stock
+
+            # Buscar categoria con el nombre y recuperar el indice
+            cat = Controller.Controller.buscar_categoria(categoria)
+            id_cat = cat[0][0]
+            # Limpiando datos para almacenarlos en la BD
+            nombre = " ".join(nombre.split())
+
+            # Agregar dato en la BD
+            nuevo_prod = Producto.Producto()
+            nuevo_prod.setnombre(nombre)
+            nuevo_prod.setcategoria(id_cat)
+            nuevo_prod.setprecio(costo)
+            nuevo_prod.setstock(stock)
+            #res = Controller.Controller.ingresar_producto(nuevo_prod)
+            res = Controller.Controller.actualizar_producto(id_producto, nuevo_prod)
+
+
+            # Creacion del mensaje de exito o fracaso
+            msgBox = QtWidgets.QMessageBox()
+            msgBox.setWindowTitle(" ")
+
+            if res == -1:
+              msgBox.setText("Error al actualizar producto")
+              msgBox.exec()
+            else:
+              msgBox.setText("Producto actualizado con exito")
+              msgBox.exec()
+              self.procesar_actualizacion()
+
+        else:
+            print("Cancelado")
+
+###################################################################################
+###################################################################################
+###################################################################################
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

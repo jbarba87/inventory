@@ -6,7 +6,7 @@ path = 'inventario'
 
 class Modell:
 
-    def ingresar_producto_db(alumno):
+    def ingresar_producto_db(producto):
         try:
             conn = sqlite3.connect(path)
         except:
@@ -18,14 +18,21 @@ class Modell:
         precio = producto.getprecio()
         stock = producto.getstock()
 
-        sql_command = "insert into productos (nombre, categoria, precio, stock) values ('{}', '{}', '{}', '{}', '{}')".format (nombre, categoria, precio, stock)
+        sql_command = "insert into PRODUCTOS (NOMBRE, ID_CATEGORIA, COSTO, STOCK) values ('{}', '{}', '{}', '{}')".format (nombre, categoria, precio, stock)
 
-        c.execute(sql_command)
-        conn.commit()
+        try:
+            c.execute(sql_command)
+            conn.commit()
+        except:
+            conn.close()
+            return -1   # Aqui deberia retornar el error
+        
         conn.close()
+        return 1
 
 
-    def actualizar_producto_db(alumno):
+
+    def actualizar_producto_db(id_producto, producto):
         try:
             conn = sqlite3.connect(path)
         except:
@@ -37,22 +44,24 @@ class Modell:
         precio = producto.getprecio()
         stock = producto.getstock()
 
-        sql_command = "update productos set nombre='{}', categoria='{}', precio='{}', stock='{}' where id = '{}'".format (nombre, categoria, precio, stock, id)
+        sql_command = "update PRODUCTOS set NOMBRE='{}', ID_CATEGORIA='{}', COSTO='{}', STOCK='{}' where id = '{}'".format (nombre, categoria, precio, stock, id_producto)
+        print(sql_command)
         c.execute(sql_command)
         conn.commit()
         conn.close()
+        return 1
 
 
-    def borrar_producto_db(alumno):
+    def borrar_producto_db(id):
         try:
             conn = sqlite3.connect(path)
         except:
             print("Error al conectar con la DB")
         c = conn.cursor()
 
-        id = alumno.getid()
+        #nombre = producto.getnombre()
 
-        sql_command = "delete from productos where id = '{}'".format(id)
+        sql_command = "delete from PRODUCTOS where ID = '{}'".format(id)
         c.execute(sql_command)
         conn.commit()
         conn.close()
@@ -70,6 +79,60 @@ class Modell:
 
         #c.execute("select * from productos;")
         c.execute("select * from PRODUCTOS_CAT;")
+        record = c.fetchall()        
+        
+        conn.close()
+
+        return record
+
+
+    def listar_categorias_db():
+        
+        try:
+            conn = sqlite3.connect(path)
+        except:
+            print("Error al conectar con la DB")
+
+        c = conn.cursor()
+
+        #c.execute("select * from productos;")
+        c.execute("select * from CATEGORIAS;")
+        record = c.fetchall()        
+        
+        conn.close()
+
+        return record
+
+
+
+    def buscar_coincidencias_db(nombre):
+        
+        try:
+            conn = sqlite3.connect(path)
+        except:
+            print("Error al conectar con la DB")
+
+        c = conn.cursor()
+
+        c.execute("select * from PRODUCTOS where NOMBRE='nombre';")
+        record = c.fetchall()        
+        
+        conn.close()
+
+        return record
+
+
+
+    def buscar_categoria_db(nombre):
+        
+        try:
+            conn = sqlite3.connect(path)
+        except:
+            print("Error al conectar con la DB")
+
+        c = conn.cursor()
+        sql = "select * from CATEGORIAS where NOMBRE='{}'".format(nombre)
+        c.execute(sql)
         record = c.fetchall()        
         
         conn.close()
